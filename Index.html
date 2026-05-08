@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes — Gestión de Clientes</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0d0f14;--card:#1a1d26;--border:#2a2f3f;--accent:#f5a800;--text:#f0ead6;--muted:#7a7560;--danger:#ff4757;--warn:#f5a800;--purple:#a855f7;--green:#2ed573;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,168,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(245,168,0,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:2rem 1.5rem;}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:3px solid var(--accent);}
+.logo{display:flex;align-items:center;gap:.75rem;}
+.logo-icon{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;font-size:1.3rem;box-shadow:0 0 24px rgba(245,168,0,.45);}
+.logo h1{font-family:'Syne',sans-serif;font-size:1.5rem;letter-spacing:-1px;}
+.logo span{color:var(--accent);}
+.phone-config{display:flex;align-items:center;gap:.5rem;background:var(--card);border:1px solid var(--border);padding:.4rem .9rem;border-radius:999px;font-size:.78rem;color:var(--muted);cursor:pointer;transition:all .2s;user-select:none;}
+.phone-config:hover{border-color:var(--accent);color:var(--text);background:rgba(245,168,0,.08);}
+.phone-config-edit{display:flex;align-items:center;gap:.5rem;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:transform .2s;}
+.stat:hover{transform:translateY(-2px);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat:nth-child(1)::before{background:var(--accent);}
+.stat:nth-child(2)::before{background:var(--green);}
+.stat:nth-child(3)::before{background:var(--warn);}
+.stat:nth-child(4)::before{background:var(--purple);}
+.stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;}
+.stat-value{font-family:'Syne',sans-serif;font-size:1.6rem;}
+.notice{background:rgba(245,168,0,.10);border:1px solid rgba(245,168,0,.22);border-radius:14px;padding:1rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem;font-size:.85rem;}
+.upload-zone{border:2px dashed var(--border);border-radius:20px;padding:2rem;text-align:center;background:var(--card);cursor:pointer;transition:all .25s;margin-bottom:1rem;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(245,168,0,.07);}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2rem;margin-bottom:.4rem;}
+.upload-zone h3{font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:.25rem;}
+.upload-zone p{color:var(--muted);font-size:.82rem;}
+.upload-hint{margin-top:.4rem;font-size:.72rem;color:var(--accent);}
+.add-more-zone{border:2px solid rgba(245,168,0,.38);border-radius:14px;padding:.85rem 1.5rem;background:rgba(245,168,0,.07);cursor:pointer;transition:all .25s;margin-bottom:1rem;position:relative;display:none;}
+.add-more-zone:hover,.add-more-zone.drag{border-color:var(--accent);background:rgba(245,168,0,.12);}
+.add-more-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.add-more-inner{display:flex;align-items:center;gap:.85rem;justify-content:center;}
+.add-more-text strong{display:block;color:var(--accent);font-size:.9rem;margin-bottom:.1rem;}
+.add-more-text span{color:var(--muted);font-size:.78rem;}
+.manual-form-wrap{border:2px solid rgba(255,165,2,.3);border-radius:14px;padding:1.25rem 1.5rem;background:rgba(255,165,2,.04);margin-bottom:2rem;display:none;}
+.manual-form-wrap.visible{display:block;}
+.manual-form-title{font-family:'Syne',sans-serif;font-size:.95rem;color:var(--warn);margin-bottom:1rem;}
+.manual-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:.65rem;}
+.manual-fields-2{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:.65rem;align-items:end;}
+.field-group{display:flex;flex-direction:column;gap:.3rem;}
+.field-group label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.field-group input,.field-group select{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.55rem .85rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;width:100%;outline:none;transition:border-color .2s;}
+.field-group input:focus,.field-group select:focus{border-color:var(--warn);}
+.btn-add-manual{background:rgba(255,165,2,.15);color:var(--warn);border:1px solid rgba(255,165,2,.35);border-radius:10px;padding:.55rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.toggle-manual-btn{display:flex;align-items:center;gap:.6rem;background:rgba(255,165,2,.08);border:1px solid rgba(255,165,2,.25);border-radius:10px;padding:.5rem 1.1rem;color:var(--warn);font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:2rem;width:fit-content;}
+.template-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:2rem;}
+.template-box h3{font-family:'Syne',sans-serif;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+.vars{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;}
+.var-tag{background:rgba(245,168,0,.14);border:1px solid rgba(245,168,0,.32);color:var(--accent);padding:.22rem .6rem;border-radius:6px;font-size:.73rem;cursor:pointer;font-family:monospace;}
+.var-tag:hover{background:rgba(245,168,0,.28);}
+textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;resize:vertical;min-height:110px;}
+textarea:focus{outline:none;border-color:var(--accent);}
+.preview-msg{margin-top:.75rem;background:rgba(245,168,0,.08);border:1px solid rgba(245,168,0,.16);border-radius:12px;padding:1rem;font-size:.85rem;color:#d4aa50;white-space:pre-wrap;display:none;}
+.action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.5rem;margin-bottom:2rem;}
+.selected-info{font-size:.88rem;color:var(--muted);}
+.selected-info strong{color:var(--text);}
+.btn-group{display:flex;gap:.65rem;flex-wrap:wrap;}
+button{border:none;cursor:pointer;border-radius:10px;padding:.6rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#000;font-weight:700;}
+.btn-primary:hover{background:#d4920a;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(255,71,87,.15);color:var(--danger);border:1px solid rgba(255,71,87,.3);}
+.btn-danger:hover{background:rgba(255,71,87,.25);}
+/* TABLE */
+.table-wrapper{background:var(--card);border:1px solid var(--border);border-radius:20px;margin-bottom:2rem;overflow:hidden;}
+.table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;margin-bottom:-2px;}
+.table-scroll-top div{height:1px;}
+.table-scroll-bottom{overflow-x:auto;overflow-y:auto;}
+.table-scroll-top::-webkit-scrollbar,.table-scroll-bottom::-webkit-scrollbar{height:7px;width:7px;}
+.table-scroll-top::-webkit-scrollbar-track,.table-scroll-bottom::-webkit-scrollbar-track{background:var(--bg);}
+.table-scroll-top::-webkit-scrollbar-thumb,.table-scroll-bottom::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px;}
+.table-scroll-top::-webkit-scrollbar-thumb:hover,.table-scroll-bottom::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap;}
+.table-header h3{font-family:'Syne',sans-serif;}
+.table-controls{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:.5rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.38rem .85rem;}
+.search-box input{background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.84rem;width:140px;outline:none;}
+.filter-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.38rem .75rem;color:var(--muted);font-size:.76rem;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,168,0,.10);}
+.filter-btn.active-resuelto{border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,.08);}
+table{width:100%;border-collapse:collapse;min-width:1100px;}
+thead th{padding:.6rem .75rem;text-align:left;font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(42,47,63,.7);}
+tbody tr:hover{background:rgba(245,168,0,.03);}
+tbody tr.resuelto{opacity:.5;}
+tbody tr.resuelto .cname{text-decoration:line-through;}
+tbody tr:last-child{border-bottom:none;}
+td{padding:.5rem .75rem;font-size:.82rem;vertical-align:top;}
+td.vam{vertical-align:middle;}
+td.cname{font-weight:500;max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
+td.cdni{color:var(--muted);font-size:.8rem;vertical-align:middle;}
+td.ccred{color:var(--purple);font-size:.78rem;font-family:monospace;vertical-align:middle;}
+.source-tag{font-size:.63rem;padding:.1rem .35rem;border-radius:4px;background:rgba(255,255,255,.07);color:var(--muted);margin-left:.3rem;}
+.cb-wrap{display:flex;align-items:center;justify-content:center;vertical-align:middle;}
+input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;}
+/* PHONE CELLS */
+.ph-wrap{min-width:148px;}
+.ph-row{display:flex;align-items:center;gap:.2rem;margin-bottom:.3rem;flex-wrap:nowrap;}
+.ph-num{font-size:.78rem;color:var(--text);white-space:nowrap;}
+.ph-empty{font-size:.78rem;color:var(--muted);}
+.ph-edit{background:none;border:none;color:var(--muted);cursor:pointer;padding:.1rem .2rem;border-radius:4px;font-size:.65rem;opacity:.5;line-height:1;}
+.ph-edit:hover{opacity:1;color:var(--accent);background:rgba(245,168,0,.12);}
+.ph-edit-input{background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:.18rem .45rem;color:var(--text);font-size:.76rem;width:100px;outline:none;font-family:'DM Sans',sans-serif;}
+.ph-edit-save{background:var(--accent);color:#000;border:none;border-radius:5px;padding:.18rem .45rem;font-size:.68rem;cursor:pointer;margin-left:2px;font-weight:700;}
+.ph-edit-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:.18rem .38rem;font-size:.68rem;cursor:pointer;margin-left:2px;}
+.btn-wa-sm{display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,211,102,.15);color:#25d366;border:1px solid rgba(37,211,102,.3);border-radius:6px;padding:.15rem .4rem;font-size:.72rem;text-decoration:none;font-family:'DM Sans',sans-serif;font-weight:600;white-space:nowrap;}
+.btn-wa-sm:hover{background:rgba(37,211,102,.28);}
+.tel-res{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.18rem .38rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.68rem;cursor:pointer;outline:none;width:100%;margin-bottom:.22rem;}
+.tel-res.r-enviado{border-color:rgba(245,168,0,.55);color:var(--accent);background:rgba(245,168,0,.1);}
+.tel-res.r-contesto{border-color:rgba(46,213,115,.55);color:var(--green);background:rgba(46,213,115,.08);}
+.tel-res.r-no_contesta{border-color:rgba(255,165,2,.5);color:var(--warn);background:rgba(255,165,2,.08);}
+.tel-res.r-sin_wa{border-color:rgba(255,71,87,.5);color:var(--danger);background:rgba(255,71,87,.08);}
+.tel-res.r-numero_malo{border-color:rgba(255,71,87,.4);color:#ff8c94;background:rgba(255,71,87,.06);}
+.tel-res.r-pendiente{border-color:var(--border);color:var(--muted);}
+.tel-obs{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.18rem .4rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.68rem;width:100%;outline:none;}
+.tel-obs:focus{border-color:var(--accent);}
+.tel-obs::placeholder{color:var(--muted);}
+/* ESTADO GENERAL */
+.res-sel{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.25rem .5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.72rem;cursor:pointer;outline:none;width:100%;}
+.res-sel:hover{border-color:var(--accent);}
+.res-sel.rs-resuelto{border-color:rgba(245,168,0,.65);color:var(--accent);background:rgba(245,168,0,.14);font-weight:700;}
+.res-sel.rs-contesto{border-color:rgba(46,213,115,.55);color:var(--green);background:rgba(46,213,115,.08);}
+.res-sel.rs-no_contesta{border-color:rgba(255,165,2,.5);color:var(--warn);background:rgba(255,165,2,.08);}
+.res-sel.rs-compromiso_pago{border-color:rgba(168,85,247,.5);color:var(--purple);background:rgba(168,85,247,.1);font-weight:600;}
+.res-sel.rs-sin_wa{border-color:rgba(255,71,87,.5);color:var(--danger);background:rgba(255,71,87,.08);}
+.res-sel.rs-numero_malo{border-color:rgba(255,71,87,.4);color:#ff8c94;background:rgba(255,71,87,.06);}
+.res-sel.rs-llamar{border-color:rgba(168,85,247,.4);color:var(--purple);background:rgba(168,85,247,.08);}
+.res-sel.rs-pendiente{border-color:var(--border);color:var(--muted);}
+/* DEL BTN */
+.btn-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:.2rem .4rem;border-radius:6px;font-size:.82rem;}
+.btn-del:hover{background:rgba(255,71,87,.15);color:var(--danger);}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.empty-state .icon{font-size:3rem;margin-bottom:1rem;opacity:.5;}
+.resultado-print-text{display:none;}
+/* MODALS */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:none;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:var(--card);border:2px solid var(--accent);border-radius:20px;padding:2rem;max-width:440px;width:90%;}
+.modal-box h3{font-family:'Syne',sans-serif;font-size:1.05rem;color:var(--purple);margin-bottom:1rem;}
+.modal-box label{font-size:.72rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:.3rem;margin-top:.75rem;}
+.modal-box input,.modal-box textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.55rem .85rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;}
+.modal-box textarea{min-height:70px;resize:vertical;}
+.modal-box input:focus,.modal-box textarea:focus{border-color:var(--purple);}
+.modal-actions{display:flex;gap:.65rem;margin-top:1.25rem;}
+.btn-purple{background:rgba(168,85,247,.2);color:var(--purple);border:1px solid rgba(168,85,247,.4);border-radius:10px;padding:.6rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;flex:1;}
+.btn-purple:hover{background:rgba(168,85,247,.35);}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:.6rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;}
+/* SHEET MODAL */
+.modal-sheet{background:var(--card);border:2px solid var(--accent);border-radius:20px;padding:2rem;max-width:540px;width:92%;}
+.modal-sheet h3{font-family:'Syne',sans-serif;font-size:1.1rem;margin-bottom:.5rem;}
+.modal-sheet p{color:var(--muted);font-size:.85rem;margin-bottom:1.25rem;}
+.sheet-list{display:flex;flex-wrap:wrap;gap:.65rem;margin-bottom:1.25rem;}
+.btn-sheet{background:rgba(245,168,0,.1);color:var(--accent);border:1px solid rgba(245,168,0,.3);border-radius:10px;padding:.6rem 1.1rem;font-size:.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-sheet:hover{background:rgba(245,168,0,.22);}
+.btn-sheet-all{background:rgba(168,85,247,.1);color:var(--purple);border-color:rgba(168,85,247,.3);}
+.btn-sheet-all:hover{background:rgba(168,85,247,.22);}
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--accent);color:var(--text);padding:1rem 1.5rem;border-radius:14px;font-size:.88rem;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(120px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;}
+.toast.show{transform:translateY(0);opacity:1;}
+.print-header{display:none;font-family:'Syne',sans-serif;margin-bottom:1rem;}
+.print-header h2{font-size:1.2rem;margin-bottom:.2rem;}
+.print-header p{font-size:.8rem;color:#555;}
+/* SORT BUTTONS EN COLUMNAS */
+.sort-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:.15rem .3rem;border-radius:5px;font-size:.7rem;line-height:1;transition:all .15s;display:inline-flex;align-items:center;gap:.15rem;}
+.sort-btn:hover{color:var(--accent);background:rgba(245,168,0,.1);}
+.sort-btn.active{color:var(--accent);background:rgba(245,168,0,.16);font-weight:700;}
+.th-wrap{display:flex;align-items:center;justify-content:space-between;gap:.3rem;white-space:nowrap;}
+/* IMG UPLOAD EN PLANTILLA */
+.img-upload-area{border:2px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-top:.75rem;background:rgba(255,255,255,.02);}
+.img-upload-area:hover{border-color:var(--accent);background:rgba(245,168,0,.05);}
+.img-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-preview{margin-top:.75rem;position:relative;display:inline-block;}
+.img-preview img{max-height:140px;max-width:100%;border-radius:10px;border:1px solid var(--border);}
+.img-remove{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+@media print{
+  body{background:#fff !important;color:#000 !important;}
+  body::before{display:none !important;}
+  .container{padding:0 !important;max-width:100% !important;}
+  header,.stats,.notice,.upload-zone,.add-more-zone,.manual-form-wrap,.toggle-manual-btn,.template-box,.action-bar,.table-controls,.toast,.modal-ov,.btn-del,.res-sel,.cb-wrap,.btn-wa-sm,.ph-edit,.tel-res,.tel-obs,.col-hide-print{display:none !important;}
+  .table-wrapper{border:none !important;background:#fff !important;overflow:visible !important;box-shadow:none !important;}
+  .table-header{border-bottom:2px solid #000 !important;padding:0 0 .4rem !important;}
+  .table-header h3{color:#000 !important;}
+  table{min-width:0 !important;width:100% !important;font-size:.72rem !important;}
+  thead th{color:#333 !important;border-bottom:1.5px solid #000 !important;padding:.3rem .4rem !important;background:#f0f0f0 !important;}
+  td{padding:.3rem .4rem !important;color:#000 !important;border-bottom:1px solid #ddd !important;white-space:normal !important;}
+  tbody tr:nth-child(even){background:#fafafa !important;}
+  .print-num{font-weight:700;color:#000 !important;}
+  .print-header{display:block !important;}
+}
+@media(max-width:900px){.stats{grid-template-columns:1fr 1fr;}.manual-fields{grid-template-columns:1fr 1fr;}.manual-fields-2{grid-template-columns:1fr 1fr;}}
+
+/* ── MEJORAS v4 ────────────────────────────────────────── */
+/* Stats clickeables */
+.stat{cursor:pointer;}
+.stat.stat-active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(245,168,0,.25);}
+/* Barra de progreso */
+.progress-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.85rem 1.2rem;margin-bottom:1.5rem;display:none;}
+.progress-wrap.show{display:block;}
+.progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;font-size:.8rem;}
+.progress-pct{font-family:'Syne',sans-serif;color:var(--accent);font-weight:700;}
+.progress-bar{height:8px;background:var(--bg);border-radius:999px;overflow:hidden;position:relative;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:999px;transition:width .4s ease;}
+/* FAB (siguiente pendiente) */
+.fab{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--accent);color:#000;border:none;border-radius:999px;padding:1rem 1.5rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;box-shadow:0 8px 32px rgba(245,168,0,.5);z-index:500;display:none;align-items:center;gap:.5rem;transition:all .2s;}
+.fab:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(245,168,0,.6);}
+.fab.show{display:inline-flex;}
+/* Modo cards (mobile) */
+.client-card{display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.75rem;}
+.cc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.65rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);}
+.cc-num{font-family:'Syne',sans-serif;color:var(--accent);font-weight:700;font-size:.78rem;background:rgba(245,168,0,.12);padding:.15rem .45rem;border-radius:6px;flex-shrink:0;}
+.cc-name{font-weight:600;font-size:.95rem;flex:1;}
+.cc-info{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.78rem;margin-bottom:.7rem;}
+.cc-info-row{display:flex;flex-direction:column;}
+.cc-info-row .lbl{color:var(--muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.04em;}
+.cc-info-row .val{color:var(--text);}
+.cc-tels{border-top:1px solid var(--border);padding-top:.65rem;}
+.cc-tel-row{margin-bottom:.65rem;}
+.cc-tel-row:last-child{margin-bottom:0;}
+.cc-tel-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;margin-bottom:.25rem;letter-spacing:.05em;}
+.cc-actions{display:flex;gap:.4rem;margin-top:.65rem;flex-wrap:wrap;}
+.cc-actions .res-sel{flex:1;min-width:140px;}
+.cc-actions .btn-del{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.25);color:var(--danger);border-radius:8px;padding:.4rem .7rem;}
+@media(max-width:768px){
+  .container{padding:1rem .85rem;}
+  header{flex-direction:column;gap:1rem;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;}
+  .stats{grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.2rem;}
+  .stat{padding:.85rem 1rem;}
+  .stat-value{font-size:1.3rem;}
+  .stat-label{font-size:.62rem;}
+  .table-header{padding:.85rem 1rem;flex-direction:column;align-items:stretch;}
+  .table-controls{gap:.4rem;}
+  .filter-btn{padding:.45rem .65rem;font-size:.74rem;flex:1;min-width:auto;}
+  .search-box{width:100%;}
+  .search-box input{width:100%;}
+  .table-scroll-top{display:none;}
+  .table-scroll-bottom{overflow-x:hidden;}
+  table{display:none;}
+  #tableContainer .client-card{display:block;}
+  .fab{bottom:1rem;right:1rem;padding:.85rem 1.2rem;font-size:.85rem;}
+  .upload-zone{padding:1.25rem;}
+  .template-box{padding:1rem;}
+  .vars{gap:.3rem;}
+  .var-tag{font-size:.66rem;padding:.18rem .45rem;}
+  .action-bar{flex-direction:column;align-items:stretch;}
+  .action-bar .btn-group{justify-content:space-between;}
+  .toggle-manual-btn{width:100%;justify-content:center;}
+  .manual-fields,.manual-fields-2{grid-template-columns:1fr 1fr;}
+  .toast{bottom:5rem;right:.5rem;left:.5rem;}
+}
+@media(max-width:480px){
+  .stats{grid-template-columns:1fr 1fr;}
+  .cc-info{grid-template-columns:1fr;}
+  .manual-fields,.manual-fields-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <h1><span>Clientes</span></h1>
+    </div>
+    <div class="phone-config" id="phoneConfigDisplay" onclick="togglePhoneEdit()">
+      <span>📱</span><span id="phoneDisplayText">+54 11 4083-4679</span>
+      <span style="font-size:.7rem;color:var(--accent);margin-left:.3rem;">✏️ cambiar</span>
+    </div>
+    <div class="phone-config-edit" id="phoneConfigEdit" style="display:none;">
+      <span style="font-size:.8rem;color:var(--muted);">+54</span>
+      <input type="text" id="phoneInput" placeholder="Ej: 1134567890" value="1140834679" maxlength="15"
+        style="background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:.3rem .7rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;width:140px;outline:none;"
+        onkeydown="if(event.key==='Enter')savePhone();if(event.key==='Escape')togglePhoneEdit();">
+      <button onclick="savePhone()" style="background:var(--accent);color:#000;border:none;border-radius:8px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;font-weight:600;">✓</button>
+      <button onclick="togglePhoneEdit()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;">✕</button>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat" id="stTotal" onclick="setFilter('todos')"><div class="stat-label">Total Clientes</div><div class="stat-value" id="statTotal">0</div></div>
+    <div class="stat" id="stEnviado" onclick="setFilter('enviado')"><div class="stat-label">✅ Enviados</div><div class="stat-value" id="statContesto">0</div></div>
+    <div class="stat" id="stPendiente" onclick="setFilter('pendiente')"><div class="stat-label">⏳ Pendientes</div><div class="stat-value" id="statNoContesta">0</div></div>
+    <div class="stat" id="stResuelto" onclick="setFilter('resuelto')"><div class="stat-label">🎉 Resueltos</div><div class="stat-value" id="statResueltos">0</div></div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-top">
+      <span style="color:var(--muted);">📊 Progreso de gestión</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:.35rem;" id="progressText">0 de 0 contactados</div>
+  </div>
+
+  <div class="notice">
+    <span style="font-size:1.4rem;">💡</span>
+    <span>Abrí <strong><a href="https://web.whatsapp.com" target="_blank" style="color:var(--accent);">WhatsApp Web</a></strong> con el número <strong id="noticePhone">+54 11 4083-4679</strong> antes de enviar. Usá el botón <strong>📱 WA</strong> en cada teléfono para abrir el chat con el mensaje listo.</span>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" accept=".xlsx,.xls,.csv" id="fileInput">
+    <div class="upload-icon">📂</div>
+    <h3>Cargá tu Excel de clientes</h3>
+    <p>Arrastrá o hacé click para seleccionar · Si tiene varias hojas, te va a preguntar cuál usar</p>
+    <div class="upload-hint">Columnas: DNI · Nombre Completo · Cód. Comercio · Línea de Crédito · Cupo Adelantada · Cupo Vencida · Últ. Compra · Tel 1 · Tel 2 · Tel 3 · Tel 4</div>
+  </div>
+
+  <div id="addMoreZone" style="display:none;gap:.75rem;flex-direction:column;">
+    <div class="add-more-zone" style="border-color:rgba(255,71,87,.4);background:rgba(255,71,87,.04);position:relative;cursor:pointer;" id="replaceZone">
+      <input type="file" accept=".xlsx,.xls,.csv" id="fileInputReplace" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+      <div class="add-more-inner"><span style="font-size:1.4rem;">🔄</span><div class="add-more-text"><strong style="color:var(--danger);">Reemplazar lista con nuevo Excel</strong><span>Borra los clientes actuales</span></div></div>
+    </div>
+    <div class="add-more-zone" style="position:relative;cursor:pointer;" id="appendZone">
+      <input type="file" accept=".xlsx,.xls,.csv" id="fileInputMore" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+      <div class="add-more-inner"><span style="font-size:1.4rem;">📎</span><div class="add-more-text"><strong>Agregar más clientes desde otro Excel</strong><span>Se suman a la lista · Duplicados se ignoran</span></div></div>
+    </div>
+  </div>
+
+  <button class="toggle-manual-btn" onclick="toggleManual()">
+    <span id="manualToggleIcon">✏️</span>
+    <span id="manualToggleText">Agregar cliente manualmente</span>
+  </button>
+
+  <div class="manual-form-wrap" id="manualForm">
+    <div class="manual-form-title">✏️ Nuevo cliente manual</div>
+    <div class="manual-fields">
+      <div class="field-group"><label>Nombre completo</label><input type="text" id="mNombre" placeholder="Ej: Juan García"></div>
+      <div class="field-group"><label>DNI</label><input type="text" id="mDni" placeholder="Ej: 30456789"></div>
+      <div class="field-group"><label>Cód. Comercio</label><input type="text" id="mCodComercio" placeholder="Ej: COM-001"></div>
+      <div class="field-group"><label>Línea de Crédito</label><input type="text" id="mLineaCredito" placeholder="Ej: LC-0023"></div>
+    </div>
+    <div class="manual-fields" style="margin-bottom:.65rem;">
+      <div class="field-group"><label>Cupo Adelantada</label><input type="number" id="mCupoAdelantada" placeholder="Ej: 50000"></div>
+      <div class="field-group"><label>Cupo Vencida</label><input type="number" id="mCupoVencida" placeholder="Ej: 15000"></div>
+      <div class="field-group"><label>Últ. Compra</label><input type="date" id="mUltCompra"></div>
+      <div class="field-group"><label>Días de Mora</label><input type="number" id="mDiasMora" placeholder="Ej: 45"></div>
+    </div>
+    <div class="manual-fields-2">
+      <div class="field-group"><label>Teléfono 1</label><input type="text" id="mTel1" placeholder="Ej: 1134567890"></div>
+      <div class="field-group"><label>Teléfono 2</label><input type="text" id="mTel2" placeholder="Ej: 1198765432"></div>
+      <div class="field-group"><label>Teléfono 3</label><input type="text" id="mTel3" placeholder="Ej: 1187654321"></div>
+      <div class="field-group"><label>Teléfono 4</label><input type="text" id="mTel4" placeholder="Ej: 1176543210"></div>
+      <button class="btn-add-manual" onclick="addManual()">+ Agregar</button>
+    </div>
+  </div>
+
+  <div class="template-box">
+    <h3><span>✍️</span> Plantilla de mensaje WhatsApp</h3>
+    <div class="vars">
+      <span class="var-tag" onclick="insertVar('{nombre}')">✦ {nombre}</span>
+      <span class="var-tag" onclick="insertVar('{dni}')">✦ {dni}</span>
+      <span class="var-tag" onclick="insertVar('{credito}')">✦ {credito}</span>
+      <span class="var-tag" onclick="insertVar('{linea}')">✦ {linea}</span>
+      <span class="var-tag" onclick="insertVar('{cupo_vencida}')">✦ {cupo_vencida}</span>
+      <span class="var-tag" onclick="insertVar('{ult_compra}')">✦ {ult_compra}</span>
+      <span class="var-tag" onclick="insertVar('{dias_mora}')">✦ {dias_mora}</span>
+    </div>
+    <textarea id="msgTemplate">📢 Aviso importante — Gestión de cuenta
+Estimado/a {nombre} DNI {dni}:
+Nos comunicamos de MEGA SPORTS para informarle sobre su cuenta de crédito.
+Le solicitamos que se comunique con nosotros a la brevedad para regularizar su situación.
+Quedamos a su disposición.
+¡Esperamos su contacto!</textarea>
+    <div class="preview-msg" id="msgPreview"></div>
+    <!-- IMAGEN PARA WA -->
+    <div style="margin-top:.85rem;">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">📎 Imagen para enviar con el mensaje <span style="font-size:.7rem;opacity:.7;">(jpg, png, gif)</span></div>
+      <div class="img-upload-area" id="imgUploadArea">
+        <input type="file" accept="image/*" id="imgFileInput" onchange="handleImgUpload(this)">
+        <span style="font-size:.82rem;color:var(--muted);">🖼️ Tocá para subir imagen</span>
+      </div>
+      <div id="imgPreviewWrap" style="display:none;margin-top:.65rem;">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <div class="img-preview" style="position:relative;">
+            <img id="imgPreview" src="" alt="Imagen WA" style="max-height:120px;max-width:200px;border-radius:10px;border:2px solid var(--accent);cursor:grab;" draggable="true">
+            <button class="img-remove" onclick="removeImg()" title="Quitar imagen" style="position:absolute;top:-8px;right:-8px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:.8rem;color:var(--accent);font-weight:600;margin-bottom:.4rem;">✅ Imagen cargada</div>
+            <div style="font-size:.75rem;color:var(--muted);line-height:1.7;">
+              Al tocar <strong style="color:var(--text);">📱 WA</strong>:<br>
+              1️⃣ Se abre WhatsApp Web con el mensaje<br>
+              2️⃣ Aparece un panel flotante con la imagen<br>
+              3️⃣ <strong style="color:var(--accent);">Arrastrá la imagen al chat</strong> y enviá ✅
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <div class="selected-info"><strong id="selectedCount">0</strong> seleccionados</div>
+    <div class="btn-group">
+      <button class="btn-outline" onclick="toggleSelectAll()">☑ Todos</button>
+      <button class="btn-outline" onclick="exportExcel()" style="border-color:rgba(46,213,115,.4);color:var(--green);">📊 Excel</button>
+      <button class="btn-outline" onclick="exportVCF()" style="border-color:rgba(245,168,0,.45);color:var(--accent);">📇 VCF</button>
+      <button class="btn-outline" onclick="printTable()" style="border-color:rgba(255,165,2,.4);color:var(--warn);">🖨️ Imprimir</button>
+      <button class="btn-outline" onclick="exportBackup()" style="border-color:rgba(168,85,247,.4);color:var(--purple);">💾 Backup</button>
+      <button class="btn-outline" onclick="document.getElementById('restoreInput').click()" style="border-color:rgba(168,85,247,.4);color:var(--purple);">📥 Restaurar</button>
+      <input type="file" accept=".json" id="restoreInput" style="display:none;" onchange="importBackup(this)">
+      <button class="btn-danger" onclick="clearData()">🗑 Limpiar</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-header">
+      <h3>Lista de Clientes <span id="tableCount" style="font-size:.75rem;color:var(--muted);font-weight:400;margin-left:.5rem;"></span></h3>
+      <div class="table-controls">
+        <button class="filter-btn active" id="filterTodos" onclick="setFilter('todos')">Todos</button>
+        <button class="filter-btn" id="filterPendiente" onclick="setFilter('pendiente')">Pendientes</button>
+        <button class="filter-btn" id="filterEnviado" onclick="setFilter('enviado')" style="border-color:rgba(245,168,0,.3);color:var(--muted);">✅ Enviados</button>
+        <button class="filter-btn" id="filterResuelto" onclick="setFilter('resuelto')" style="border-color:rgba(168,85,247,.3);color:var(--muted);">🎉 Resueltos</button>
+        <select class="filter-btn" id="filterHoja" onchange="applyFilter()" style="cursor:pointer;display:none;">
+          <option value="">📄 Todas las hojas</option>
+        </select>
+        <select class="filter-btn" id="filterComercio" onchange="applyFilter()" style="cursor:pointer;">
+          <option value="">🏪 Todos los comercios</option>
+        </select>
+        <select class="filter-btn" id="filterMora" onchange="applyFilter()" style="cursor:pointer;">
+          <option value="">📅 Días mora: Todos</option>
+          <option value="1-30">1 - 30 días</option>
+          <option value="31-60">31 - 60 días</option>
+          <option value="61-90">61 - 90 días</option>
+          <option value="91-120">91 - 120 días</option>
+          <option value="121-180">121 - 180 días</option>
+          <option value="180+">+180 días</option>
+        </select>
+        <select class="filter-btn" id="filterTel1" onchange="applyFilter()" style="cursor:pointer;">
+          <option value="">📞 Tel 1: Todos</option>
+          <option value="pendiente">⏳ Pendiente</option>
+          <option value="enviado">✅ Enviado</option>
+          <option value="contesto">📞 Contestó</option>
+          <option value="no_contesta">📵 No contesta</option>
+          <option value="sin_wa">❌ Sin WA</option>
+          <option value="numero_malo">🚫 Nro. malo</option>
+        </select>
+        <select class="filter-btn" id="filterTel2" onchange="applyFilter()" style="cursor:pointer;">
+          <option value="">📞 Tel 2: Todos</option>
+          <option value="pendiente">⏳ Pendiente</option>
+          <option value="enviado">✅ Enviado</option>
+          <option value="contesto">📞 Contestó</option>
+          <option value="no_contesta">📵 No contesta</option>
+          <option value="sin_wa">❌ Sin WA</option>
+          <option value="numero_malo">🚫 Nro. malo</option>
+        </select>
+        <select class="filter-btn" id="filterTel3" onchange="applyFilter()" style="cursor:pointer;">
+          <option value="">📞 Tel 3: Todos</option>
+          <option value="pendiente">⏳ Pendiente</option>
+          <option value="enviado">✅ Enviado</option>
+          <option value="contesto">📞 Contestó</option>
+          <option value="no_contesta">📵 No contesta</option>
+          <option value="sin_wa">❌ Sin WA</option>
+          <option value="numero_malo">🚫 Nro. malo</option>
+        </select>
+        <div class="search-box">🔍 <input type="text" id="searchInput" placeholder="Nombre, DNI, comercio..." oninput="applyFilterDebounced()"></div>
+      </div>
+    </div>
+    <div class="table-scroll-top" id="scrollTop"><div></div></div>
+    <div class="table-scroll-bottom" id="scrollBottom">
+      <div id="tableContainer">
+        <div class="empty-state"><div class="icon">📋</div><p>Cargá un Excel o agregá clientes manualmente</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="print-header" id="printHeader">
+    <h2>CLIENTES — Gestión de Clientes</h2>
+    <p id="printFecha"></p>
+  </div>
+</div>
+
+<!-- MODAL: Selección de hoja -->
+<div class="modal-ov" id="modalHojas">
+  <div class="modal-sheet">
+    <h3>📄 Seleccionar hoja de Excel</h3>
+    <p>El archivo tiene múltiples hojas. ¿Cuál querés cargar?</p>
+    <div class="sheet-list" id="sheetList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModalHojas()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Compromiso de Pago -->
+<div class="modal-ov" id="modalCompromiso">
+  <div class="modal-box">
+    <h3>🤝 Compromiso de Pago</h3>
+    <label>Cliente</label>
+    <input type="text" id="compNombre" readonly style="opacity:.7;">
+    <label>Fecha comprometida</label>
+    <input type="date" id="compFecha">
+    <label>Monto acordado ($)</label>
+    <input type="number" id="compMonto" placeholder="Ej: 15000">
+    <label>Notas</label>
+    <textarea id="compNotas" placeholder="Ej: Paga el viernes por transferencia..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModalCompromiso()">Cancelar</button>
+      <button class="btn-purple" onclick="guardarCompromiso()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB: Siguiente pendiente -->
+<button class="fab" id="fabNext" onclick="abrirSiguientePendiente()">
+  <span style="font-size:1.2rem;">📱</span>
+  <span id="fabText">Siguiente pendiente</span>
+</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ESTADO ────────────────────────────────────────────────────
+let clients = [];
+let currentFilter = 'todos';
+let currentSort   = { field: null, dir: 1 };
+let miNumero = '1140834679';
+let pendingWB = null, pendingAppend = false;
+const msgArea = document.getElementById('msgTemplate');
+
+// ── TELÉFONO PROPIO ───────────────────────────────────────────
+function togglePhoneEdit() {
+  const d = document.getElementById('phoneConfigDisplay');
+  const e = document.getElementById('phoneConfigEdit');
+  if (e.style.display==='none') {
+    d.style.display='none'; e.style.display='flex';
+    const i=document.getElementById('phoneInput'); i.value=miNumero; i.focus(); i.select();
+  } else { e.style.display='none'; d.style.display='flex'; }
+}
+function savePhone() {
+  const raw = document.getElementById('phoneInput').value.replace(/\D/g,'').replace(/^0/,'').replace(/^54/,'');
+  if (raw.length<8){showToast('⚠️ Número inválido');return;}
+  miNumero=raw; const fmt='+54 '+raw;
+  document.getElementById('phoneDisplayText').textContent=fmt;
+  const n=document.getElementById('noticePhone'); if(n) n.textContent=fmt;
+  togglePhoneEdit(); guardarDatos(); showToast('✅ Número actualizado: '+fmt);
+}
+
+// ── PERSISTENCIA ──────────────────────────────────────────────
+function guardarDatos() {
+  try {
+    localStorage.setItem('clientes_v3_data', JSON.stringify(clients));
+    localStorage.setItem('clientes_v3_num',  miNumero);
+    localStorage.setItem('clientes_v3_msg',  msgArea?msgArea.value:'');
+  } catch(e){}
+}
+function cargarDatos() {
+  try {
+    const c=localStorage.getItem('clientes_v3_data'); if(c) clients=JSON.parse(c);
+    const n=localStorage.getItem('clientes_v3_num');
+    if(n){
+      miNumero=n; const fmt='+54 '+n;
+      const pd=document.getElementById('phoneDisplayText'); if(pd) pd.textContent=fmt;
+      const ni=document.getElementById('noticePhone'); if(ni) ni.textContent=fmt;
+      const pi=document.getElementById('phoneInput'); if(pi) pi.value=n;
+    }
+    const m=localStorage.getItem('clientes_v3_msg'); if(m&&msgArea) msgArea.value=m;
+  } catch(e){}
+}
+
+// ── FILE EVENTS ───────────────────────────────────────────────
+function bindZone(zoneId, inputId, append, confirmMsg) {
+  const z = document.getElementById(zoneId);
+  const i = document.getElementById(inputId);
+  if(!z||!i) return;
+  z.addEventListener('dragover', e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave', ()=>z.classList.remove('drag'));
+  z.addEventListener('drop', e=>{e.preventDefault();z.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){if(confirmMsg&&!confirm(confirmMsg))return;readFile(f,append);}});
+  i.addEventListener('change', e=>{const f=e.target.files[0];if(f){if(confirmMsg&&!confirm(confirmMsg))return;readFile(f,append);i.value='';}});
+}
+bindZone('uploadZone','fileInput',false,null);
+bindZone('replaceZone','fileInputReplace',false,'¿Reemplazar toda la lista con este nuevo Excel?');
+bindZone('appendZone','fileInputMore',true,null);
+
+// ── LEER ARCHIVO ──────────────────────────────────────────────
+function readFile(file, append) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, {type:'binary', cellDates:true});
+      if (wb.SheetNames.length > 1) {
+        pendingWB=wb; pendingAppend=append; showSheetSelector(wb);
+      } else {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+        rows.forEach(r=>r.__sheet__=wb.SheetNames[0]);
+        processRows(rows, append);
+      }
+    } catch(err){showToast('❌ Error al leer el archivo');console.error(err);}
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── SELECTOR DE HOJAS ─────────────────────────────────────────
+function showSheetSelector(wb) {
+  const list = document.getElementById('sheetList');
+  list.innerHTML = wb.SheetNames.map((name,i)=>
+    `<button class="btn-sheet" onclick="loadSheet(${i})"">📄 ${name}</button>`
+  ).join('')+`<button class="btn-sheet btn-sheet-all" onclick="loadSheet(-1)">📋 Todas las hojas</button>`;
+  document.getElementById('modalHojas').classList.add('show');
+}
+function loadSheet(idx) {
+  cerrarModalHojas();
+  const wb=pendingWB, append=pendingAppend;
+  let raw=[];
+  const sheets = idx===-1 ? wb.SheetNames : [wb.SheetNames[idx]];
+  sheets.forEach(sn=>{
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+    rows.forEach(r=>r.__sheet__=sn);
+    raw=raw.concat(rows);
+  });
+  processRows(raw, append);
+}
+function cerrarModalHojas(){document.getElementById('modalHojas').classList.remove('show');}
+
+// ── PROCESAR FILAS ────────────────────────────────────────────
+function xPhone(val) {
+  if (!val) return '';
+  let s = String(val).trim();
+  // quitar texto descriptivo
+  s = s.replace(/familiar|particular|cel\b|tel\b|fax|whatsapp\b|\bwa\b|movil|mobile/gi, ' ');
+  // solo dígitos
+  let d = s.replace(/[^\d]/g, '');
+  if (!d || d.length < 6) return '';
+
+  // quitar prefijo país
+  if      (d.startsWith('00549') && d.length > 5) d = d.slice(5);
+  else if (d.startsWith('0054')  && d.length > 4) d = d.slice(4);
+  else if (d.startsWith('549')   && d.length >= 12) d = d.slice(3);
+  else if (d.startsWith('54')    && d.length >= 11) d = d.slice(2);
+
+  // quitar 0 de discado nacional
+  if (d.startsWith('0')) d = d.slice(1);
+
+  // quitar "15" de celular si está en posición 2, 3 o 4 (después del código de área)
+  if (d.length >= 11) {
+    if      (d.slice(2,4)==='15') d = d.slice(0,2) + d.slice(4); // área 2 dígitos (11)
+    else if (d.slice(3,5)==='15') d = d.slice(0,3) + d.slice(5); // área 3 dígitos
+    else if (d.slice(4,6)==='15') d = d.slice(0,4) + d.slice(6); // área 4 dígitos
+  }
+
+  // truncar a 10 si quedó más largo
+  if (d.length > 10) d = d.slice(-10);
+  if (d.length < 8) return '';
+  return d;
+}
+
+// Arma el número WA en formato internacional argentino: 549XXXXXXXXXX
+function waNum(num) {
+  if (!num) return '';
+  let d = num.replace(/\D/g, '');
+  // si ya tiene el 54 adelante, sacar para re-armar
+  if (d.startsWith('549') && d.length >= 12) d = d.slice(3);
+  else if (d.startsWith('54') && d.length >= 11) d = d.slice(2);
+  // quitar 0 inicial
+  if (d.startsWith('0')) d = d.slice(1);
+  return '549' + d;
+}
+function processRows(raw, append) {
+  if(!raw.length){showToast('⚠️ Archivo vacío');return;}
+  const startId = append ? clients.length : 0;
+  const norm = s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[_\s\.]/g,'');
+  const find = (keys,terms)=>{
+    const e=keys.find(k=>terms.some(t=>norm(k)===norm(t))); if(e) return e;
+    return keys.find(k=>terms.some(t=>norm(k).includes(norm(t))))||'';
+  };
+  const parsed = raw.map((row,i)=>{
+    const keys=Object.keys(row);
+    const f=t=>find(keys,t);
+    const nk=f(['nombrecompl','nombrecompleto','nombre','name','cliente','client']);
+    const dk=f(['dni','doc','cedula','identidad']);
+    const ck=f(['codcomercio','cod.comercio','codigocomer','comercio','codcomer']);
+    const lk=f(['lineadecredito','lineacredito','linea','lineacred','lineacre']);
+    const ak=f(['cupoadelantada','adelantada','cupoade','cupoadelant']);
+    const vk=f(['cupovencida','vencida','cupoven','cupovenc']);
+    const uk=f(['ultcompra','ult.compra','ultimacompra','fechacompra','fechaultcompra']);
+    const p1=f(['tel1','telefono1','celular1','movil1','telefono 1','tel','phone','celular','movil','whatsapp']);
+    const p2=f(['tel2','telefono2','celular2','telefono 2','familiar','contacto2']);
+    const p3=f(['tel3','telefono3','celular3','telefono 3','contacto3']);
+    const p4=f(['tel4','telefono4','celular4','telefono 4','contacto4']);
+    const dmk=f(['diasmora','dias_mora','diasdemora','mora','atraso','vencidos','diasvencidos']);
+    return {
+      id: startId+i,
+      nombre: row[nk]||`Cliente ${startId+i+1}`,
+      dni: String(row[dk]||'').replace(/\D/g,''),
+      codComercio: String(row[ck]||'').trim(),
+      lineaCredito: String(row[lk]||'').trim(),
+      cupoAdelantada: parseFloat(String(row[ak]||'0').replace(/[^\d.,]/g,'').replace(',','.'))||0,
+      cupoVencida: parseFloat(String(row[vk]||'0').replace(/[^\d.,]/g,'').replace(',','.'))||0,
+      ultCompra: row[uk]?fmtDate(row[uk]):'-',
+      diasMora: parseInt(String(row[dmk]||'0'))||0,
+      tel1: xPhone(row[p1]), tel2: xPhone(row[p2]), tel3: xPhone(row[p3]), tel4: xPhone(row[p4]),
+      tel1Res:'pendiente', tel1Obs:'', tel2Res:'pendiente', tel2Obs:'', tel3Res:'pendiente', tel3Obs:'',
+      checked:true, resuelto:false, resultado:'pendiente',
+      sheet:row.__sheet__||'', source:'excel'
+    };
+  });
+  if(append){
+    const dnis=new Set(clients.map(c=>c.dni).filter(Boolean));
+    const fresh=parsed.filter(c=>!c.dni||!dnis.has(c.dni));
+    clients=[...clients,...fresh];
+    showToast(`➕ ${fresh.length} clientes agregados${parsed.length-fresh.length?` (${parsed.length-fresh.length} dup.)`:''}`)
+  } else {
+    try{localStorage.removeItem('clientes_v3_data');}catch(e){}
+    clients=parsed;
+    showToast(`✅ ${clients.length} clientes cargados`);
+    document.getElementById('addMoreZone').style.display='flex';
+  }
+  reindexIds(); populateHojaFilter(); applyFilter(); updateStats(); updateSelected(); guardarDatos();
+}
+
+// ── MANUAL ────────────────────────────────────────────────────
+let manualVisible=false;
+function toggleManual(){
+  manualVisible=!manualVisible;
+  document.getElementById('manualForm').classList.toggle('visible',manualVisible);
+  document.getElementById('manualToggleIcon').textContent=manualVisible?'✕':'✏️';
+  document.getElementById('manualToggleText').textContent=manualVisible?'Cerrar formulario':'Agregar cliente manualmente';
+  if(manualVisible) document.getElementById('mNombre').focus();
+}
+function addManual(){
+  const nombre=document.getElementById('mNombre').value.trim();
+  if(!nombre){showToast('⚠️ Ingresá el nombre');document.getElementById('mNombre').focus();return;}
+  const rd=document.getElementById('mUltCompra').value;
+  clients.push({
+    id:clients.length,
+    nombre, dni:document.getElementById('mDni').value.trim().replace(/\D/g,''),
+    codComercio:document.getElementById('mCodComercio').value.trim(),
+    lineaCredito:document.getElementById('mLineaCredito').value.trim(),
+    cupoAdelantada:parseFloat(document.getElementById('mCupoAdelantada').value)||0,
+    cupoVencida:parseFloat(document.getElementById('mCupoVencida').value)||0,
+    ultCompra:rd?new Date(rd+'T00:00:00').toLocaleDateString('es-AR'):'-',
+    diasMora:parseInt(document.getElementById('mDiasMora').value)||0,
+    tel1:document.getElementById('mTel1').value.trim().replace(/\D/g,''),
+    tel2:document.getElementById('mTel2').value.trim().replace(/\D/g,''),
+    tel3:document.getElementById('mTel3').value.trim().replace(/\D/g,''),
+    tel4:document.getElementById('mTel4').value.trim().replace(/\D/g,''),
+    tel1Res:'pendiente',tel1Obs:'',tel2Res:'pendiente',tel2Obs:'',tel3Res:'pendiente',tel3Obs:'',
+    checked:true,resuelto:false,resultado:'pendiente',source:'manual'
+  });
+  reindexIds();
+  ['mNombre','mDni','mCodComercio','mLineaCredito','mCupoAdelantada','mCupoVencida','mUltCompra','mDiasMora','mTel1','mTel2','mTel3','mTel4'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mNombre').focus();
+  document.getElementById('addMoreZone').style.display='flex';
+  applyFilter();populateHojaFilter();updateStats();updateSelected();guardarDatos();
+  showToast(`✅ ${nombre} agregado`);
+}
+function deleteClient(id){
+  clients=clients.filter(c=>c.id!==id);
+  reindexIds();populateHojaFilter();applyFilter();updateStats();updateSelected();guardarDatos();
+}
+function reindexIds(){clients.forEach((c,i)=>c.id=i);}
+
+// ── RESULTADO GENERAL ─────────────────────────────────────────
+function setResultado(id,valor){
+  if(valor==='compromiso_pago'){abrirModalCompromiso(id);return;}
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  c.resultado=valor; c.resuelto=(valor==='resuelto');
+  if(c.resuelto) c.checked=false;
+  updateStats();updateSelected();guardarDatos();
+  applyFilter();
+}
+
+// ── RESULTADO POR TELÉFONO ────────────────────────────────────
+function setTelRes(id,resF,valor){
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  c[resF]=valor;
+  const sel=document.querySelector(`[data-tr="${id}-${resF}"]`);
+  if(sel){sel.value=valor;sel.className=`tel-res r-${valor}`;}
+  updateStats();guardarDatos();
+}
+function setTelObs(id,obsF,valor){
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  c[obsF]=valor; guardarDatos();
+}
+
+// ── EDICIÓN DE TELÉFONOS ──────────────────────────────────────
+function editPhone(id,field){
+  const cell=document.getElementById(`pc-${id}-${field}`); if(!cell) return;
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  const v=c[field]||'';
+  cell.innerHTML=`<input id="pi-${id}-${field}" type="text" value="${v}" class="ph-edit-input" placeholder="Sin 0 ni 15"
+    onkeydown="if(event.key==='Enter')savePhone2(${id},'${field}');if(event.key==='Escape')cancelPhone()">
+    <button class="ph-edit-save" onclick="savePhone2(${id},'${field}')">✓</button>
+    <button class="ph-edit-cancel" onclick="cancelPhone()">✕</button>`;
+  const inp=document.getElementById(`pi-${id}-${field}`); inp.focus();inp.select();
+}
+function savePhone2(id,field){
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  const inp=document.getElementById(`pi-${id}-${field}`);
+  c[field]=inp?inp.value.replace(/\D/g,''):'';
+  guardarDatos();applyFilter();showToast('✅ Teléfono actualizado');
+}
+function cancelPhone(){applyFilter();}
+
+// ── FILTROS ───────────────────────────────────────────────────
+function setFilter(f){
+  currentFilter=f;
+  ['filterTodos','filterPendiente','filterEnviado','filterResuelto'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.classList.remove('active','active-resuelto');
+    el.style.borderColor=''; el.style.color='var(--muted)'; el.style.background='';
+  });
+  if(f==='todos')    { const e=document.getElementById('filterTodos');    e.classList.add('active');           e.style.color=''; e.style.background=''; }
+  if(f==='pendiente'){ const e=document.getElementById('filterPendiente');e.classList.add('active');           e.style.color=''; e.style.background=''; }
+  if(f==='enviado')  { const e=document.getElementById('filterEnviado');  e.style.borderColor='var(--accent)'; e.style.color='var(--accent)'; e.style.background='rgba(245,168,0,.12)'; }
+  if(f==='resuelto') { const e=document.getElementById('filterResuelto'); e.classList.add('active-resuelto');  e.style.color='var(--purple)'; }
+  applyFilter();
+  updateStats();
+}
+function sortBy(field){
+  if(currentSort.field===field) currentSort.dir*=-1;
+  else { currentSort.field=field; currentSort.dir=1; }
+  applyFilter();
+}
+function moraInRange(d, range) {
+  if (!range || !d) return true;
+  if (range==='1-30')   return d>=1   && d<=30;
+  if (range==='31-60')  return d>=31  && d<=60;
+  if (range==='61-90')  return d>=61  && d<=90;
+  if (range==='91-120') return d>=91  && d<=120;
+  if (range==='121-180')return d>=121 && d<=180;
+  if (range==='180+')   return d>180;
+  return true;
+}
+
+let _filterTimer=null;
+function applyFilter(){
+  const q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  const hj=document.getElementById('filterHoja')?.value||'';
+  const co=document.getElementById('filterComercio')?.value||'';
+  const mr=document.getElementById('filterMora')?.value||'';
+  const t1=document.getElementById('filterTel1')?.value||'';
+  const t2=document.getElementById('filterTel2')?.value||'';
+  const t3=document.getElementById('filterTel3')?.value||'';
+  let data=clients.filter(c=>{
+    if(q&&![(c.nombre||''),(c.dni||''),(c.codComercio||''),(c.lineaCredito||''),(c.tel1||''),(c.tel2||''),(c.tel3||''),(c.tel4||''),(c.ultCompra||'')].some(v=>v.toLowerCase().includes(q))) return false;
+    if(currentFilter==='pendiente'&&c.resultado!=='pendiente') return false;
+    if(currentFilter==='enviado'   &&c.resultado!=='enviado')   return false;
+    if(currentFilter==='resuelto' &&c.resultado!=='resuelto')  return false;
+    if(hj&&(c.sheet||'').trim()!==hj) return false;
+    if(co&&(c.codComercio||'').trim()!==co) return false;
+    if(mr&&!moraInRange(c.diasMora||0, mr)) return false;
+    if(t1&&(c.tel1Res||'pendiente')!==t1) return false;
+    if(t2&&(c.tel2Res||'pendiente')!==t2) return false;
+    if(t3&&(c.tel3Res||'pendiente')!==t3) return false;
+    return true;
+  });
+  // Aplicar orden
+  if(currentSort.field){
+    const f=currentSort.field, d=currentSort.dir;
+    data=[...data].sort((a,b)=>{
+      let av=a[f]??'', bv=b[f]??'';
+      if(typeof av==='number'&&typeof bv==='number') return (av-bv)*d;
+      if(f==='ultCompra'){
+        const pd=s=>{const p=(s||'').split('/');return p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(0);};
+        return (pd(av)-pd(bv))*d;
+      }
+      return String(av).localeCompare(String(bv),'es',{sensitivity:'base'})*d;
+    });
+  }
+  renderTable(data);
+  const tc=document.getElementById('tableCount');
+  if(tc) tc.textContent=`(${data.length}${data.length!==clients.length?' de '+clients.length:''})`;
+  // Update FAB visibility
+  updateFAB();
+}
+// Debounced para search input
+function applyFilterDebounced(){
+  clearTimeout(_filterTimer);
+  _filterTimer=setTimeout(applyFilter, 200);
+}
+
+function getFilteredClients(){
+  const q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  const hj=document.getElementById('filterHoja')?.value||'';
+  const co=document.getElementById('filterComercio')?.value||'';
+  const mr=document.getElementById('filterMora')?.value||'';
+  const t1=document.getElementById('filterTel1')?.value||'';
+  const t2=document.getElementById('filterTel2')?.value||'';
+  const t3=document.getElementById('filterTel3')?.value||'';
+  return clients.filter(c=>{
+    if(q&&![(c.nombre||''),(c.dni||''),(c.codComercio||''),(c.lineaCredito||''),(c.tel1||''),(c.tel2||''),(c.tel3||'')].some(v=>v.toLowerCase().includes(q))) return false;
+    if(currentFilter==='pendiente'&&c.resultado!=='pendiente') return false;
+    if(currentFilter==='enviado'   &&c.resultado!=='enviado')   return false;
+    if(currentFilter==='resuelto' &&c.resultado!=='resuelto')  return false;
+    if(hj&&(c.sheet||'').trim()!==hj) return false;
+    if(co&&(c.codComercio||'').trim()!==co) return false;
+    if(mr&&!moraInRange(c.diasMora||0, mr)) return false;
+    if(t1&&(c.tel1Res||'pendiente')!==t1) return false;
+    if(t2&&(c.tel2Res||'pendiente')!==t2) return false;
+    if(t3&&(c.tel3Res||'pendiente')!==t3) return false;
+    return true;
+  });
+}
+function populateHojaFilter(){
+  const sel=document.getElementById('filterHoja'); if(!sel) return;
+  const cur=sel.value;
+  const hojas=[...new Set(clients.map(c=>(c.sheet||'').trim()).filter(Boolean))].sort();
+  if(hojas.length>1){
+    sel.innerHTML='<option value="">📄 Todas las hojas</option>'+hojas.map(h=>`<option value="${h}" ${h===cur?'selected':''}>${h}</option>`).join('');
+    sel.style.display='';
+  } else {sel.innerHTML='<option value="">📄 Todas las hojas</option>';sel.style.display='none';}
+  // Comercios únicos
+  const selC=document.getElementById('filterComercio'); if(selC){
+    const curC=selC.value;
+    const coms=[...new Set(clients.map(c=>(c.codComercio||'').trim()).filter(Boolean))].sort();
+    selC.innerHTML='<option value="">🏪 Todos los comercios</option>'+coms.map(c=>`<option value="${c}" ${c===curC?'selected':''}>${c}</option>`).join('');
+  }
+}
+
+// ── TABLA ─────────────────────────────────────────────────────
+const TRES = `<option value="pendiente">⏳ Pendiente</option><option value="enviado">✅ Enviado</option><option value="contesto">📞 Contestó</option><option value="no_contesta">📵 No contesta</option><option value="sin_wa">❌ Sin WA</option><option value="numero_malo">🚫 Nro. malo</option>`;
+
+const RES_LBL={pendiente:'⏳ Pendiente',enviado:'✅ Enviado',contesto:'📞 Contestó',no_contesta:'📵 No contesta',
+    compromiso_pago:'🤝 Compromiso',sin_wa:'❌ Sin WA',numero_malo:'🚫 Nro. malo',llamar:'📲 Llamar',resuelto:'🎉 Resuelto'};
+const RES_CLR={pendiente:'var(--muted)',enviado:'var(--accent)',contesto:'var(--green)',
+    no_contesta:'var(--warn)',compromiso_pago:'var(--purple)',sin_wa:'var(--danger)',
+    numero_malo:'var(--danger)',llamar:'var(--purple)',resuelto:'var(--accent)'};
+
+function renderTable(data){
+  if(!data.length){
+    document.getElementById('tableContainer').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Sin resultados</p></div>';
+    return;
+  }
+  let html=`<table><thead><tr>
+    <th class="col-hide-print"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
+    <th style="min-width:30px;">#</th>
+    <th><div class="th-wrap">DNI<button class="sort-btn ${currentSort.field==='dni'?'active':''}" onclick="sortBy('dni')">${currentSort.field==='dni'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th><div class="th-wrap">Nombre Completo<button class="sort-btn ${currentSort.field==='nombre'?'active':''}" onclick="sortBy('nombre')">${currentSort.field==='nombre'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th><div class="th-wrap">Cód. Comercio<button class="sort-btn ${currentSort.field==='codComercio'?'active':''}" onclick="sortBy('codComercio')">${currentSort.field==='codComercio'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th class="col-hide-print">Línea Crédito</th>
+    <th><div class="th-wrap">Cupo Adelant.<button class="sort-btn ${currentSort.field==='cupoAdelantada'?'active':''}" onclick="sortBy('cupoAdelantada')">${currentSort.field==='cupoAdelantada'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th><div class="th-wrap">Cupo Vencida<button class="sort-btn ${currentSort.field==='cupoVencida'?'active':''}" onclick="sortBy('cupoVencida')">${currentSort.field==='cupoVencida'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th><div class="th-wrap">Últ. Compra<button class="sort-btn ${currentSort.field==='ultCompra'?'active':''}" onclick="sortBy('ultCompra')">${currentSort.field==='ultCompra'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th><div class="th-wrap">Días Mora<button class="sort-btn ${currentSort.field==='diasMora'?'active':''}" onclick="sortBy('diasMora')">${currentSort.field==='diasMora'?(currentSort.dir===1?'▲':'▼'):'⇅'}</button></div></th>
+    <th>Tel 1 · Resultado · Obs</th>
+    <th class="col-hide-print">Tel 2 · Resultado · Obs</th>
+    <th class="col-hide-print">Tel 3 · Resultado · Obs</th>
+    <th class="col-hide-print">Tel 4</th>
+    <th class="col-hide-print">Estado General</th><th class="col-hide-print"></th>
+  </tr></thead><tbody>`;
+
+  let rowNum=0;
+  data.forEach(c=>{
+    const res=c.resultado||'pendiente';
+    rowNum++;
+
+    // helper: genera el contenido interno de una celda tel (sin el <td>)
+    const telTdInner=(field,resF,obsF,cl)=>{
+      const cl2=cl||c;
+      const num=cl2[field]||'';
+      const r=cl2[resF]||'pendiente';
+      const obs=(cl2[obsF]||'').replace(/"/g,'&quot;');
+      const wa=num?`https://web.whatsapp.com/send?phone=${waNum(num)}&text=${encodeURIComponent(buildMsg(cl2))}`:'';
+
+      return `<div class="ph-wrap">
+          <div class="ph-row" id="pc-${cl2.id}-${field}">
+            ${num
+              ?`<span class="ph-num">${num}</span>
+                <button class="ph-edit" onclick="editPhone(${cl2.id},'${field}')">✏️</button>
+                <a href="${wa}" target="_blank" class="btn-wa-sm" onclick="onWAClick(${cl2.id},'${resF}',event)">📱 WA</a>`
+              :`<span class="ph-empty">—</span>
+                <button class="ph-edit" onclick="editPhone(${cl2.id},'${field}')">➕</button>`
+            }
+          </div>
+          ${num?`
+          <select class="tel-res r-${r}" data-tr="${cl2.id}-${resF}" onchange="setTelRes(${cl2.id},'${resF}',this.value)">
+            ${TRES.replace(`value="${r}"`,`value="${r}" selected`)}
+          </select>
+          <input type="text" class="tel-obs" value="${obs}" placeholder="Observación..."
+            onchange="setTelObs(${cl2.id},'${obsF}',this.value)"
+            onblur="setTelObs(${cl2.id},'${obsF}',this.value)">
+          `:''}
+        </div>`;
+    };
+
+    // tel1: genera <td> completa con clase print visible
+    const telTd=(field,resF,obsF)=>`<td style="min-width:160px;">${telTdInner(field,resF,obsF,c)}</td>`;
+
+    // tel4: solo número + edición, sin WA/resultado
+    const tel4Td=()=>{
+      const num=c.tel4||'';
+      return `<td class="col-hide-print" style="min-width:110px;" >
+        <div class="ph-row" id="pc-${c.id}-tel4">
+          ${num
+            ?`<span class="ph-num">${num}</span><button class="ph-edit" onclick="editPhone(${c.id},'tel4')">✏️</button>`
+            :`<span class="ph-empty">—</span><button class="ph-edit" onclick="editPhone(${c.id},'tel4')">➕</button>`}
+        </div>
+      </td>`;
+    };
+
+    html+=`<tr class="${c.resuelto?'resuelto':''}">
+      <td class="cb-wrap col-hide-print"><input type="checkbox" ${c.checked&&!c.resuelto?'checked':''} ${c.resuelto?'disabled':''} onchange="onCheck(${c.id},this)"></td>
+      <td class="print-num vam" style="font-weight:700;color:var(--accent);font-size:.8rem;">${rowNum}</td>
+      <td class="cdni">${c.dni||'—'}</td>
+      <td class="cname">${c.nombre}<span class="source-tag col-hide-print">${c.source}</span></td>
+      <td class="ccred vam">${c.codComercio||'—'}</td>
+      <td class="ccred vam col-hide-print">${c.lineaCredito||'—'}</td>
+      <td class="vam" style="font-size:.8rem;color:var(--accent);font-family:'Syne',sans-serif;">${c.cupoAdelantada?'$'+c.cupoAdelantada.toLocaleString('es-AR'):'—'}</td>
+      <td class="vam" style="font-size:.8rem;color:var(--warn);font-family:'Syne',sans-serif;">${c.cupoVencida?'$'+c.cupoVencida.toLocaleString('es-AR'):'—'}</td>
+      <td class="vam" style="font-size:.76rem;color:var(--muted);">${c.ultCompra||'—'}</td>
+      <td class="vam" style="text-align:center;">${c.diasMora>0?`<span style="display:inline-block;padding:.15rem .5rem;border-radius:999px;font-size:.72rem;font-weight:600;background:${c.diasMora>=181?'rgba(255,71,87,.18)':c.diasMora>=91?'rgba(255,165,2,.18)':'rgba(245,168,0,.14)'};color:${c.diasMora>=181?'var(--danger)':c.diasMora>=91?'var(--warn)':'var(--accent)'};">${c.diasMora}d</span>`:'<span style="color:var(--muted);">—</span>'}</td>
+      ${telTd('tel1','tel1Res','tel1Obs')}
+      <td class="col-hide-print" style="min-width:160px;">${telTdInner('tel2','tel2Res','tel2Obs',c)}</td>
+      <td class="col-hide-print" style="min-width:160px;">${telTdInner('tel3','tel3Res','tel3Obs',c)}</td>
+      ${tel4Td()}
+      <td class="col-hide-print" style="min-width:155px;">
+        <span class="resultado-print-text">${RES_LBL[res]||res}</span>
+        <div style="font-size:.8rem;font-weight:600;color:${RES_CLR[res]||'var(--muted)'};margin-bottom:.35rem;">${RES_LBL[res]||res}</div>
+        ${c.compromiso?`<div style="font-size:.68rem;color:var(--purple);margin-bottom:.3rem;">🤝 ${c.compromiso.fecha||''} ${c.compromiso.monto?'$'+Number(c.compromiso.monto).toLocaleString('es-AR'):''}</div>`:''}
+        <select class="res-sel rs-${res}" onchange="setResultado(${c.id},this.value)">
+          <option value="pendiente"       ${res==='pendiente'?'selected':''}>⏳ Pendiente</option>
+          <option value="contesto"        ${res==='contesto'?'selected':''}>📞 Contestó</option>
+          <option value="no_contesta"     ${res==='no_contesta'?'selected':''}>📵 No contesta</option>
+          <option value="compromiso_pago" ${res==='compromiso_pago'?'selected':''}>🤝 Compromiso</option>
+          <option value="sin_wa"          ${res==='sin_wa'?'selected':''}>❌ Sin WA</option>
+          <option value="numero_malo"     ${res==='numero_malo'?'selected':''}>🚫 Nro. malo</option>
+          <option value="llamar"          ${res==='llamar'?'selected':''}>📲 Llamar</option>
+          <option value="resuelto"        ${res==='resuelto'?'selected':''}>🎉 Resuelto</option>
+        </select>
+      </td>
+      <td class="vam col-hide-print"><button class="btn-del" onclick="deleteClient(${c.id})" title="Eliminar">✕</button></td>
+    </tr>`;
+  });
+
+  // Renderizar cards (mobile) — mismo data, formato distinto
+  let cards = '';
+  let cn = 0;
+  data.forEach(c => {
+    cn++;
+    const res = c.resultado||'pendiente';
+    const ccTel = (field, resF, obsF, label) => {
+      const num = c[field]||'';
+      if(!num) return '';
+      const r = c[resF]||'pendiente';
+      const obs = (c[obsF]||'').replace(/"/g,'&quot;');
+      const wa = `https://web.whatsapp.com/send?phone=${waNum(num)}&text=${encodeURIComponent(buildMsg(c))}`;
+      return `<div class="cc-tel-row">
+        <div class="cc-tel-label">${label}: ${num}</div>
+        <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.3rem;flex-wrap:wrap;">
+          <a href="${wa}" target="_blank" class="btn-wa-sm" onclick="onWAClick(${c.id},'${resF}',event)">📱 Enviar</a>
+          <button class="ph-edit" onclick="editPhone(${c.id},'${field}')" style="opacity:1;font-size:.75rem;">✏️ Editar</button>
+        </div>
+        <select class="tel-res r-${r}" data-tr="${c.id}-${resF}" onchange="setTelRes(${c.id},'${resF}',this.value)" style="margin-bottom:.3rem;">
+          ${TRES.replace(`value="${r}"`,`value="${r}" selected`)}
+        </select>
+        <input type="text" class="tel-obs" value="${obs}" placeholder="Observación..."
+          onchange="setTelObs(${c.id},'${obsF}',this.value)">
+      </div>`;
+    };
+    cards += `<div class="client-card ${c.resuelto?'resuelto':''}">
+      <div class="cc-head">
+        <span class="cc-num">#${cn}</span>
+        <div class="cc-name" style="${c.resuelto?'text-decoration:line-through;opacity:.6;':''}">${c.nombre}</div>
+        <input type="checkbox" ${c.checked&&!c.resuelto?'checked':''} ${c.resuelto?'disabled':''} onchange="onCheck(${c.id},this)" style="flex-shrink:0;">
+      </div>
+      <div class="cc-info">
+        <div class="cc-info-row"><span class="lbl">DNI</span><span class="val">${c.dni||'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Comercio</span><span class="val" style="color:var(--purple);">${c.codComercio||'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Línea Crédito</span><span class="val">${c.lineaCredito||'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Días Mora</span><span class="val" style="color:${(c.diasMora||0)>=181?'var(--danger)':(c.diasMora||0)>=91?'var(--warn)':'var(--accent)'};">${c.diasMora||0}d</span></div>
+        <div class="cc-info-row"><span class="lbl">Cupo Adelant.</span><span class="val" style="color:var(--accent);">${c.cupoAdelantada?'$'+c.cupoAdelantada.toLocaleString('es-AR'):'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Cupo Vencida</span><span class="val" style="color:var(--warn);">${c.cupoVencida?'$'+c.cupoVencida.toLocaleString('es-AR'):'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Últ. Compra</span><span class="val">${c.ultCompra||'—'}</span></div>
+        <div class="cc-info-row"><span class="lbl">Estado</span><span class="val" style="color:${RES_CLR[res]||'var(--muted)'};font-weight:600;">${RES_LBL[res]||res}</span></div>
+      </div>
+      <div class="cc-tels">
+        ${ccTel('tel1','tel1Res','tel1Obs','📞 Tel 1')}
+        ${ccTel('tel2','tel2Res','tel2Obs','📞 Tel 2')}
+        ${ccTel('tel3','tel3Res','tel3Obs','📞 Tel 3')}
+        ${c.tel4 ? `<div class="cc-tel-row"><div class="cc-tel-label">📞 Tel 4: ${c.tel4}</div></div>` : ''}
+      </div>
+      <div class="cc-actions">
+        <select class="res-sel rs-${res}" onchange="setResultado(${c.id},this.value)">
+          <option value="pendiente"       ${res==='pendiente'?'selected':''}>⏳ Pendiente</option>
+          <option value="enviado"         ${res==='enviado'?'selected':''}>✅ Enviado</option>
+          <option value="contesto"        ${res==='contesto'?'selected':''}>📞 Contestó</option>
+          <option value="no_contesta"     ${res==='no_contesta'?'selected':''}>📵 No contesta</option>
+          <option value="compromiso_pago" ${res==='compromiso_pago'?'selected':''}>🤝 Compromiso</option>
+          <option value="sin_wa"          ${res==='sin_wa'?'selected':''}>❌ Sin WA</option>
+          <option value="numero_malo"     ${res==='numero_malo'?'selected':''}>🚫 Nro. malo</option>
+          <option value="resuelto"        ${res==='resuelto'?'selected':''}>🎉 Resuelto</option>
+        </select>
+        <button class="btn-del" onclick="deleteClient(${c.id})">✕</button>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('tableContainer').innerHTML = html+'</tbody></table>' + cards;
+  updateSelected();
+}
+
+function onCheck(id,el){const c=clients.find(x=>x.id===id);if(c&&c.resultado!=='resuelto') c.checked=el.checked;updateSelected();}
+function toggleAll(el){const vis=new Set(getFilteredClients().map(c=>c.id));clients.forEach(c=>{if(vis.has(c.id)&&c.resultado!=='resuelto') c.checked=el.checked;});applyFilter();}
+let allSel=false;
+function toggleSelectAll(){
+  allSel=!allSel;
+  const vis=new Set(getFilteredClients().map(c=>c.id));
+  clients.forEach(c=>{if(vis.has(c.id)&&c.resultado!=='resuelto') c.checked=allSel;});
+  applyFilter();updateSelected();
+}
+function updateSelected(){
+  const vis=new Set(getFilteredClients().map(c=>c.id));
+  document.getElementById('selectedCount').textContent=clients.filter(c=>c.checked&&c.resultado!=='resuelto'&&vis.has(c.id)).length;
+}
+function updateStats(){
+  const total    = clients.length;
+  const enviados = clients.filter(c=>c.tel1Res==='enviado'||c.tel2Res==='enviado'||c.tel3Res==='enviado'||c.resultado==='enviado').length;
+  const pendientes = clients.filter(c=>c.resultado==='pendiente').length;
+  const resueltos = clients.filter(c=>c.resultado==='resuelto').length;
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statContesto').textContent=enviados;
+  document.getElementById('statNoContesta').textContent=pendientes;
+  document.getElementById('statResueltos').textContent=resueltos;
+  // Progress bar
+  const wrap = document.getElementById('progressWrap');
+  if(total>0){
+    wrap.classList.add('show');
+    const contactados = total - pendientes;
+    const pct = Math.round((contactados/total)*100);
+    document.getElementById('progressPct').textContent = pct+'%';
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('progressText').textContent = `${contactados} de ${total} contactados · ${enviados} enviados · ${resueltos} resueltos`;
+  } else { wrap.classList.remove('show'); }
+  // Active stat highlight
+  ['stTotal','stEnviado','stPendiente','stResuelto'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.classList.remove('stat-active');
+  });
+  const map = {todos:'stTotal', enviado:'stEnviado', pendiente:'stPendiente', resuelto:'stResuelto'};
+  const activeStat = document.getElementById(map[currentFilter]);
+  if(activeStat) activeStat.classList.add('stat-active');
+}
+
+// ── MENSAJE ───────────────────────────────────────────────────
+function buildMsg(c){
+  return msgArea.value
+    .replace(/{nombre}/g,c.nombre)
+    .replace(/{dni}/g,c.dni||'S/D')
+    .replace(/{credito}/g,c.codComercio||c.lineaCredito||'S/D')
+    .replace(/{linea}/g,c.lineaCredito||'S/D')
+    .replace(/{agencia}/g,'S/D')
+    .replace(/{cupo_vencida}/g,c.cupoVencida?'$'+c.cupoVencida.toLocaleString('es-AR'):'S/D')
+    .replace(/{ult_compra}/g,c.ultCompra||'S/D')
+    .replace(/{dias_mora}/g,c.diasMora>0?c.diasMora+' días':'S/D');
+}
+msgArea.addEventListener('input',()=>{updatePreview();guardarDatos();});
+function updatePreview(){
+  const p=document.getElementById('msgPreview');
+  const a=clients.find(c=>!c.resuelto);
+  if(a){p.style.display='block';p.textContent='👁 Vista previa:\n'+buildMsg(a);}
+}
+function insertVar(v){
+  const s=msgArea.selectionStart,e=msgArea.selectionEnd;
+  msgArea.value=msgArea.value.slice(0,s)+v+msgArea.value.slice(e);
+  msgArea.focus();msgArea.selectionStart=msgArea.selectionEnd=s+v.length;
+  updatePreview();
+}
+
+// ── IMAGEN PARA WA ────────────────────────────────────────────
+let waImageBlob = null;
+let waImageURL  = null;
+
+function handleImgUpload(input) {
+  const file = input.files[0]; if(!file) return;
+  waImageBlob = file;
+  waImageURL  = URL.createObjectURL(file);
+  document.getElementById('imgPreview').src = waImageURL;
+  document.getElementById('imgPreviewWrap').style.display = 'block';
+  document.getElementById('imgUploadArea').style.display  = 'none';
+  // Hacer la imagen draggable
+  const img = document.getElementById('imgPreview');
+  img.addEventListener('dragstart', e => {
+    if(waImageBlob){
+      // Algunos navegadores permiten pasar el archivo en drag
+      e.dataTransfer.items.add(waImageBlob);
+    }
+  });
+  showToast('🖼️ Imagen lista — arrastrala al chat de WA');
+}
+function removeImg() {
+  waImageBlob = null; waImageURL = null;
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  document.getElementById('imgUploadArea').style.display  = 'block';
+  document.getElementById('imgFileInput').value = '';
+  const p = document.getElementById('waDragPanel'); if(p) p.remove();
+}
+
+async function onWAClick(id, resF, evt) {
+  // 1. Marcar como Enviado
+  setTelRes(id, resF, 'enviado');
+  const c = clients.find(x=>x.id===id);
+  if(c && c.resultado==='pendiente'){ c.resultado='enviado'; guardarDatos(); }
+  updateStats(); applyFilter();
+
+  // 2. Si hay imagen Y el dispositivo soporta Web Share con archivos → usar share nativo
+  // Esto abre WhatsApp con la imagen YA adjuntada en mobile
+  if(waImageBlob){
+    const tel = c[resF.replace('Res','')] || '';
+    const msg = buildMsg(c);
+    const fileToShare = new File([waImageBlob], waImageBlob.name||'imagen.jpg', {type: waImageBlob.type||'image/jpeg'});
+
+    if(navigator.canShare && navigator.canShare({files:[fileToShare]})){
+      // ✅ Web Share API con archivo (móvil moderno)
+      if(evt) evt.preventDefault(); // bloquear el href para que no abra WA Web a la par
+      try {
+        await navigator.share({
+          files: [fileToShare],
+          text: msg,
+          title: c.nombre
+        });
+        showToast('✅ Compartido con WhatsApp');
+      } catch(err){
+        if(err.name!=='AbortError'){
+          // fallback: abrir WA Web con texto + intentar copiar imagen
+          window.open(`https://api.whatsapp.com/send?phone=${waNum(tel)}&text=${encodeURIComponent(msg)}`,'_blank');
+          tryCopyImg();
+        }
+      }
+    } else {
+      // Desktop / sin soporte share files → abrir WA Web (ya está abierto por el href) y copiar imagen al clipboard
+      tryCopyImg();
+    }
+  }
+}
+
+async function tryCopyImg(){
+  if(!waImageBlob) return;
+  try {
+    const type = waImageBlob.type||'image/png';
+    await navigator.clipboard.write([new ClipboardItem({[type]: waImageBlob})]);
+    showToast('✅ Enviado · Imagen copiada — pegá con Ctrl+V en el chat');
+  } catch(e){
+    showToast('✅ Enviado · Adjuntá la imagen manualmente con 📎');
+  }
+}
+
+
+let compromisoId=null;
+function abrirModalCompromiso(id){
+  const c=clients.find(x=>x.id===id);if(!c) return;
+  compromisoId=id;
+  document.getElementById('compNombre').value=c.nombre+(c.codComercio?` — ${c.codComercio}`:'');
+  document.getElementById('compFecha').value=c.compromiso?.fecha||'';
+  document.getElementById('compMonto').value=c.compromiso?.monto||'';
+  document.getElementById('compNotas').value=c.compromiso?.notas||'';
+  document.getElementById('modalCompromiso').classList.add('show');
+}
+function cerrarModalCompromiso(){document.getElementById('modalCompromiso').classList.remove('show');compromisoId=null;}
+function guardarCompromiso(){
+  const c=clients.find(x=>x.id===compromisoId);if(!c) return;
+  c.compromiso={fecha:document.getElementById('compFecha').value,monto:document.getElementById('compMonto').value,notas:document.getElementById('compNotas').value.trim()};
+  c.resultado='compromiso_pago';c.resuelto=false;
+  cerrarModalCompromiso();applyFilter();updateStats();guardarDatos();
+  showToast(`🤝 Compromiso guardado para ${c.nombre}`);
+}
+
+// ── IMPRIMIR / LIMPIAR ────────────────────────────────────────
+function printTable(){
+  if(!clients.length){showToast('⚠️ No hay clientes');return;}
+  document.getElementById('printFecha').textContent='Generado el: '+new Date().toLocaleString('es-AR');
+  document.getElementById('printHeader').style.display='block';
+  window.print();
+  setTimeout(()=>{document.getElementById('printHeader').style.display='none';},500);
+}
+function clearData(){
+  if(!confirm('¿Seguro que querés limpiar toda la lista?')) return;
+  clients=[];applyFilter();updateStats();updateSelected();
+  document.getElementById('addMoreZone').style.display='none';
+  localStorage.removeItem('clientes_v3_data');
+  showToast('🗑 Lista limpiada');
+}
+
+// ── EXPORTAR VCF ──────────────────────────────────────────────
+// ── FAB (Siguiente pendiente) ─────────────────────────────────
+function updateFAB(){
+  const fab = document.getElementById('fabNext');
+  if(!fab) return;
+  const pendientes = clients.filter(c => c.resultado==='pendiente' && (c.tel1||c.tel2||c.tel3));
+  if(pendientes.length>0){
+    fab.classList.add('show');
+    document.getElementById('fabText').textContent = `Siguiente (${pendientes.length})`;
+  } else { fab.classList.remove('show'); }
+}
+function abrirSiguientePendiente(){
+  const c = clients.find(c => c.resultado==='pendiente' && (c.tel1||c.tel2||c.tel3));
+  if(!c){ showToast('🎉 No hay más pendientes'); return; }
+  const tel = c.tel1 || c.tel2 || c.tel3;
+  const resF = c.tel1 ? 'tel1Res' : (c.tel2 ? 'tel2Res' : 'tel3Res');
+  const url = `https://web.whatsapp.com/send?phone=${waNum(tel)}&text=${encodeURIComponent(buildMsg(c))}`;
+  // simular click con evento para que onWAClick maneje el share
+  const win = window.open(url, '_blank');
+  setTelRes(c.id, resF, 'enviado');
+  if(c.resultado==='pendiente'){ c.resultado='enviado'; guardarDatos(); }
+  updateStats(); applyFilter();
+  if(waImageBlob) tryCopyImg();
+  // scroll al cliente
+  setTimeout(()=>{
+    const row = document.querySelector(`[onchange*="onCheck(${c.id}"]`);
+    if(row) row.closest('tr,.client-card')?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 150);
+}
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────
+function exportExcel(){
+  if(!clients.length){ showToast('⚠️ No hay clientes'); return; }
+  const data = (currentFilter==='todos' && !document.getElementById('searchInput').value)
+    ? clients : getFilteredClients();
+  const rows = data.map((c,i) => ({
+    '#': i+1,
+    'DNI': c.dni||'',
+    'Nombre Completo': c.nombre||'',
+    'Cód. Comercio': c.codComercio||'',
+    'Línea Crédito': c.lineaCredito||'',
+    'Cupo Adelantada': c.cupoAdelantada||0,
+    'Cupo Vencida': c.cupoVencida||0,
+    'Últ. Compra': c.ultCompra||'',
+    'Días Mora': c.diasMora||0,
+    'Tel 1': c.tel1||'',
+    'Tel 1 - Resultado': RES_LBL[c.tel1Res||'pendiente']||'',
+    'Tel 1 - Observación': c.tel1Obs||'',
+    'Tel 2': c.tel2||'',
+    'Tel 2 - Resultado': RES_LBL[c.tel2Res||'pendiente']||'',
+    'Tel 2 - Observación': c.tel2Obs||'',
+    'Tel 3': c.tel3||'',
+    'Tel 3 - Resultado': RES_LBL[c.tel3Res||'pendiente']||'',
+    'Tel 3 - Observación': c.tel3Obs||'',
+    'Tel 4': c.tel4||'',
+    'Estado General': RES_LBL[c.resultado||'pendiente']||'',
+    'Compromiso Fecha': c.compromiso?.fecha||'',
+    'Compromiso Monto': c.compromiso?.monto||'',
+    'Compromiso Notas': c.compromiso?.notas||''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // Anchos sugeridos
+  ws['!cols'] = [{wch:5},{wch:11},{wch:25},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12},{wch:10},
+                 {wch:13},{wch:16},{wch:25},{wch:13},{wch:16},{wch:25},{wch:13},{wch:16},{wch:25},
+                 {wch:13},{wch:16},{wch:13},{wch:14},{wch:30}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+  const fname = `clientes_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast(`📊 ${rows.length} clientes exportados a Excel`);
+}
+
+// ── BACKUP / RESTORE JSON ─────────────────────────────────────
+function exportBackup(){
+  if(!clients.length){ showToast('⚠️ No hay datos para respaldar'); return; }
+  const data = {
+    version: 4,
+    exportedAt: new Date().toISOString(),
+    miNumero: miNumero,
+    template: msgArea?msgArea.value:'',
+    clients: clients
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download = `clientes_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast(`💾 Backup descargado · ${clients.length} clientes`);
+}
+function importBackup(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(!data.clients || !Array.isArray(data.clients)) throw new Error('Formato inválido');
+      if(!confirm(`¿Restaurar backup con ${data.clients.length} clientes? Esto reemplaza los actuales.`)){ input.value=''; return; }
+      clients = data.clients;
+      if(data.miNumero) miNumero = data.miNumero;
+      if(data.template && msgArea) msgArea.value = data.template;
+      reindexIds(); populateHojaFilter(); applyFilter(); updateStats(); updateSelected(); guardarDatos();
+      document.getElementById('addMoreZone').style.display = 'flex';
+      const fmt = '+54 '+miNumero;
+      const pd = document.getElementById('phoneDisplayText'); if(pd) pd.textContent=fmt;
+      showToast(`📥 Backup restaurado · ${clients.length} clientes`);
+    } catch(err){ showToast('❌ Error al leer el backup: '+err.message); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+
+// ── EXPORTAR VCF ──────────────────────────────────────────────
+function exportVCF(){
+  const sel=clients.filter(c=>c.checked&&c.resultado!=='resuelto'&&c.tel1);
+  if(!sel.length){showToast('⚠️ Seleccioná al menos un cliente con teléfono');return;}
+  const lines=sel.map(c=>{
+    const parts=c.nombre.trim().split(' ');
+    const last=parts.length>1?parts[parts.length-1]:'';
+    const first=parts.length>1?parts.slice(0,-1).join(' '):c.nombre;
+    const phone=`+54${c.tel1.replace(/^0/,'').replace(/^54/,'')}`;
+    const note=[c.dni?`DNI:${c.dni}`:'',c.codComercio?`CC:${c.codComercio}`:'',c.lineaCredito?`LC:${c.lineaCredito}`:''].filter(Boolean).join(' | ');
+    const vcard=['BEGIN:VCARD','VERSION:3.0',`N:${last};${first};;;`,`FN:${c.nombre}`,`TEL;TYPE=CELL:${phone}`];
+    if(c.tel2) vcard.push(`TEL;TYPE=HOME:+54${c.tel2.replace(/^0/,'').replace(/^54/,'')}`);
+    if(c.tel3) vcard.push(`TEL;TYPE=WORK:+54${c.tel3.replace(/^0/,'').replace(/^54/,'')}`);
+    if(c.tel4) vcard.push(`TEL;TYPE=OTHER:+54${c.tel4.replace(/^0/,'').replace(/^54/,'')}`);
+    if(note) vcard.push(`NOTE:${note}`);
+    vcard.push('END:VCARD');
+    return vcard.join('\r\n');
+  });
+  const blob=new Blob([lines.join('\r\n\r\n')],{type:'text/vcard;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`clientes_${new Date().toISOString().slice(0,10)}.vcf`;a.click();
+  URL.revokeObjectURL(url);
+  showToast(`📇 ${sel.length} contactos exportados`);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function fmtDate(val){if(!val) return '-';if(val instanceof Date) return val.toLocaleDateString('es-AR');return String(val);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+// ── SCROLL SYNC ───────────────────────────────────────────────
+(function(){
+  const top=document.getElementById('scrollTop'),bot=document.getElementById('scrollBottom');
+  if(!top||!bot) return;
+  top.addEventListener('scroll',()=>bot.scrollLeft=top.scrollLeft);
+  bot.addEventListener('scroll',()=>top.scrollLeft=bot.scrollLeft);
+  const rs=()=>{const t=bot.querySelector('table');if(t) top.firstElementChild.style.width=t.scrollWidth+'px';};
+  new MutationObserver(rs).observe(bot,{childList:true,subtree:true});rs();
+})();
+
+// ── INIT ──────────────────────────────────────────────────────
+(function(){
+  cargarDatos();
+  if(clients.length){
+    applyFilter();updateStats();updateSelected();
+    document.getElementById('addMoreZone').style.display='flex';
+    showToast('💾 '+clients.length+' clientes cargados desde memoria');
+  }
+})();
+</script>
+</body>
+</html>
